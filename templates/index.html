@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FarmFair</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div class="container">
+        {% if show_login %}
+            <h1>Login to FarmFair</h1>
+            {% if login_error %}
+                <p class="error">{{ login_error }}</p>
+            {% endif %}
+            <form method="POST" action="{{ url_for('login') }}">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit">Login</button>
+                <p><a href="{{ url_for('register') }}">Register</a></p>
+            </form>
+        {% elif show_register %}
+            <h1>Register for FarmFair</h1>
+            {% if register_error %}
+                <p class="error">{{ register_error }}</p>
+            {% endif %}
+            <form method="POST" action="{{ url_for('register') }}">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <select name="role" required>
+                    <option value="farmer">Farmer</option>
+                    <option value="retailer">Retailer</option>
+                    <option value="consumer">Consumer</option>
+                </select>
+                <button type="submit">Register</button>
+                <p><a href="{{ url_for('login') }}">Login</a></p>
+            </form>
+        {% else %}
+            <h1>FarmFair</h1>
+            <p>Welcome, {{ session['role'] }}! <a href="{{ url_for('logout') }}">Logout</a></p>
+            
+            {% if error %}
+                <p class="error">{{ error }}</p>
+            {% endif %}
+            
+            <!-- Chatbot -->
+            <h2>Chat with Jarvis</h2>
+            <div id="chat">
+                {% for sender, msg in chat_history %}
+                    <p class="{{ 'you' if sender == 'You' else 'bot' }}"><b>{{ sender }}:</b> {{ msg }}</p>
+                {% endfor %}
+            </div>
+            <form method="POST">
+                <input type="text" name="message" placeholder="Ask Jarvis..." autocomplete="off">
+                <button type="submit">Send</button>
+            </form>
+            
+            <!-- Product Listing (Farmers) -->
+            {% if role == 'farmer' %}
+                <h2>List Product</h2>
+                <form method="POST">
+                    <input type="text" name="product_name" placeholder="Product Name" required>
+                    <input type="number" name="product_price" placeholder="Price (₹/kg)" step="0.01" required>
+                    <input type="number" name="product_quantity" placeholder="Quantity (kg)" required>
+                    <button type="submit">List</button>
+                </form>
+            {% endif %}
+            
+            <!-- Browse Products -->
+            <h2>Products</h2>
+            <div class="products">
+                {% for product in products %}
+                    <div class="product-item">
+                        <p><b>{{ product.name }}</b>: ₹{{ product.price }}/kg, {{ product.quantity }}kg available</p>
+                        {% if role in ['retailer', 'consumer'] %}
+                            <form method="POST">
+                                <input type="hidden" name="order_product_id" value="{{ product.id }}">
+                                <input type="number" name="order_quantity" placeholder="Quantity (kg)" required min="1">
+                                <button type="submit">Order</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- News -->
+            <h2>Farming News</h2>
+            <div class="news">
+                {% for item in news %}
+                    <div class="news-item">
+                        <h3>{{ item.title }}</h3>
+                        <p>{{ item.content }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Price Updates -->
+            <h2>Price Updates</h2>
+            <div class="prices">
+                {% for item in prices %}
+                    <div class="price-item">
+                        <p>{{ item.product }}: ₹{{ item.price }}/{{ item.unit }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    <script>
+        var chat = document.getElementById('chat');
+        if (chat) chat.scrollTop = chat.scrollHeight;
+    </script>
+</body>
+</html>
